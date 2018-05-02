@@ -15,6 +15,8 @@ contract ETHMall is SafeMath, ETHMallInterface {
 
   struct ETHSF { // "Store Front (SF)"
     uint since;
+    bool owe;
+    uint deposit;
     address pos;
   }
 
@@ -23,7 +25,7 @@ contract ETHMall is SafeMath, ETHMallInterface {
   mapping (address => address) stores;   // PoSIMS => holder
 
   // token registration
-  //uint public depositBase = 2 ether;     
+  uint public depositBase = 2 ether;     
   uint public takerFee = 2500000000000000; // 0.001  (rate)
   bool private locked;
 
@@ -55,9 +57,18 @@ contract ETHMall is SafeMath, ETHMallInterface {
     locked = false;
   }
 
+  modifier minimumSecureDeposit() {
+	  require(msg.value >= depositBase + mul(totalStores, 1000000000000000));
+	  _;
+  }
+
   // constant functions
+  function getSecureDeposit() constant returns (uint) {
+	  return depositBase + mul(totalStores, 1000000000000000);
+  }
+
   function isExpired(address pos) constant returns (bool) {
-	  if (block.number > byAddress[stores[pos]].since + 1080000) { // ~ 12 months
+	  if (block.number > byAddress[stores[pos]].since + 3) { // test
 		  return true;
 	  } else {
 		  return false;
@@ -82,8 +93,9 @@ contract ETHMall is SafeMath, ETHMallInterface {
   }
 
   // payable functions
-  function NewStoreFront() payable isNotPoS NoReentrancy returns (bool) {
+  function NewStoreFront() payable isNotPoS minimumSecureDeposit NoReentrancy returns (bool) {
     require(byAddress[msg.sender].pos == address(0));
+    require(registry != address(0));
 
     ETHSF memory newone;
     totalStores++;
@@ -91,8 +103,8 @@ contract ETHMall is SafeMath, ETHMallInterface {
     newone.pos = new PoSIMS(this, msg.sender, msg.value);
     if (newone.pos == address(0)) revert();
    
-    require(newone.pos.send(msg.value));
-
+    newone.deposit = msg.value;
+    newone.owe = true;
     newone.since = block.number;
 
     stores[newone.pos] = msg.sender;
@@ -113,7 +125,7 @@ contract ETHMall is SafeMath, ETHMallInterface {
 
     require( validAmount > 0 );
     require( msg.value == add(payment, fee) );
-    require( PoSIMSInterface(posims).purchase.value(payment)(token, validAmount, msg.sender) );
+    require( PoSIMSInterface(posims).purchase.value(payment)(token, msg.sender, validAmount) );
     require( mallOwner.send(fee) );
 
     return true;
@@ -124,10 +136,30 @@ contract ETHMall is SafeMath, ETHMallInterface {
           require(stores[msg.sender] != address(0));
 	  require(isExpired(msg.sender));
 
+	  if (byAddress[stores[msg.sender]].owe == true) revert();
+
 	  delete byAddress[stores[msg.sender]];
 	  delete stores[msg.sender];
 
 	  totalStores--;
+
+	  return true;
+  }
+
+  function depositReturn() registered NoReentrancy returns (bool) {
+          require(stores[msg.sender] != address(0));
+	  require(isExpired(msg.sender));
+	  require(byAddress[stores[msg.sender]].owe == true);
+
+	  byAddress[stores[msg.sender]].owe = false;
+
+	  uint payment = byAddress[stores[msg.sender]].deposit;
+
+	  assert(this.balance >= payment);
+
+	  byAddress[stores[msg.sender]].deposit = 0;
+
+	  require(PoSIMSInterface(msg.sender).sendDeposit.value(payment)());
 
 	  return true;
   }

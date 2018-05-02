@@ -12,7 +12,9 @@ contract PoSIMSInterface {
 	function delistProduct(uint id) returns (bool);
 	function getProductInfo(uint value) constant returns (address token, uint volume, uint price);
 	function changePrice(address token, uint newPrice) returns (bool);
-	function purchase(address token, uint amount, address buyer) payable returns (bool);
+	function purchase(address token, address buyer, uint amount) payable returns (bool);
 	function withdraw() returns (bool);
 	function closeStore() returns (bool);
+	function sendDeposit() payable returns (bool);
+	event OpenShop(address indexed shopOwner, address mall, uint indexed since, uint secureDeposit);
 }

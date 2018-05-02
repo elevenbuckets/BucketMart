@@ -18,6 +18,7 @@ contract PoSIMS is SafeMath, PoSIMSInterface {
   mapping(uint => address) catalog;
 
   bool private locked;
+  bool private paid; 
 
   function PoSIMS(address malladdr, address holder, uint _deposit) { // Constructor
     theMall = malladdr;
@@ -104,7 +105,7 @@ contract PoSIMS is SafeMath, PoSIMSInterface {
 	  return true;
   }
 
-  function purchase(address token, uint amount, address buyer) payable proxyOnly NoReentrancy returns (bool) {
+  function purchase(address token, address buyer, uint amount) payable proxyOnly NoReentrancy returns (bool) {
 	  require(totalitems > 0);
 	  require(ERC20(token).balanceOf(this) >= amount);
 	  require(ERC20(token).transfer(buyer, amount));
@@ -114,13 +115,8 @@ contract PoSIMS is SafeMath, PoSIMSInterface {
   }
 
   function withdraw() ownerOnly NoReentrancy returns (bool) {
-	  if (ETHMallInterface(theMall).isExpired(this) == true) {
-	  	require(this.balance > 0);
-	  	require(msg.sender.send(this.balance));
-	  } else {
-	  	require(this.balance > deposit);
-	  	require(msg.sender.send(this.balance - deposit));
-	  }
+  	  require(this.balance > 0);
+  	  require(msg.sender.send(this.balance));
 
 	  return true;
   }
@@ -130,6 +126,18 @@ contract PoSIMS is SafeMath, PoSIMSInterface {
 	  require(totalitems == 0);
 	  require(ETHMallInterface(theMall).removeStore());
 	  suicide(owner);
+  }
+
+  // event
+  event OpenShop(address indexed shopOwner, address mall, uint indexed since, uint secureDeposit);
+
+  function sendDeposit() payable proxyOnly returns (bool) {
+	require(paid == false);
+	paid = true;
+
+	OpenShop(owner, theMall, block.number, msg.value);
+
+	return true;
   }
 
   function () payable { revert(); }

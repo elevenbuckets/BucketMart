@@ -111,6 +111,7 @@ contract Registry is SafeMath, RegistryInterface {
     registry[token].posdid[lastPoS] = idx;
     
     delete registry[token].posdid[msg.sender];
+    delete registry[token].listed[registry[token].total];
     registry[token].total--;
 
     return true;
@@ -133,7 +134,7 @@ contract Registry is SafeMath, RegistryInterface {
       registry[token].minSaleUnit = 10 ** (decimal - 12); // minimum sale unit 
       registry[token].minTokenPrice = 10 ** 12; // wei 18 - 6
     } else {
-      registry[token].minSaleUnit = 10 ** decimal; // a token in its unit
+      registry[token].minSaleUnit = 1; // a token in its unit
       registry[token].minTokenPrice = 10 ** decimal; // wei 18 + -6 + (d - 12), d < 12
     }
 
