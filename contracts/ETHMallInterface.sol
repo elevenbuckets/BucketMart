@@ -16,5 +16,4 @@ contract ETHMallInterface {
 	function removeStore() returns (bool);
 	function connectReg(address reg) returns (bool);
 	function getSecureDeposit() constant returns (uint);
-	function depositReturn() returns (bool);
 }

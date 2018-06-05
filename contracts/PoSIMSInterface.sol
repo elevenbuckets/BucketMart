@@ -5,7 +5,7 @@ contract PoSIMSInterface {
 	uint public deposit;
   	address public theMall;
   	address public owner;
-  	address public reg;
+  	address public thisReg;
 
 	function getPrice(address token) constant returns (uint);
 	function addProductInfo(address token, uint amount, uint price) returns (bool);
@@ -15,6 +15,5 @@ contract PoSIMSInterface {
 	function purchase(address token, address buyer, uint amount) payable returns (bool);
 	function withdraw() returns (bool);
 	function closeStore() returns (bool);
-	function sendDeposit() payable returns (bool);
 	event OpenShop(address indexed shopOwner, address mall, uint indexed since, uint secureDeposit);
 }

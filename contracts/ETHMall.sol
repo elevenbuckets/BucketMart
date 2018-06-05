@@ -15,7 +15,6 @@ contract ETHMall is SafeMath, ETHMallInterface {
 
   struct ETHSF { // "Store Front (SF)"
     uint since;
-    bool owe;
     uint deposit;
     address pos;
   }
@@ -68,7 +67,7 @@ contract ETHMall is SafeMath, ETHMallInterface {
   }
 
   function isExpired(address pos) constant returns (bool) {
-	  if (block.number > byAddress[stores[pos]].since + 3) { // test
+	  if (block.number > byAddress[stores[pos]].since + 3) { // TODO: change this when mainnet
 		  return true;
 	  } else {
 		  return false;
@@ -100,11 +99,12 @@ contract ETHMall is SafeMath, ETHMallInterface {
     ETHSF memory newone;
     totalStores++;
  
-    newone.pos = new PoSIMS(this, msg.sender, msg.value);
-    if (newone.pos == address(0)) revert();
+    //newone.pos = new PoSIMS(this, msg.sender, msg.value);
+    PoSIMS pos = (new PoSIMS).value(msg.value)(this, registry, msg.sender, msg.value);
+    if (address(pos) == address(0)) revert();
    
+    newone.pos = address(pos);
     newone.deposit = msg.value;
-    newone.owe = true;
     newone.since = block.number;
 
     stores[newone.pos] = msg.sender;
@@ -136,8 +136,6 @@ contract ETHMall is SafeMath, ETHMallInterface {
           require(stores[msg.sender] != address(0));
 	  require(isExpired(msg.sender));
 
-	  if (byAddress[stores[msg.sender]].owe == true) revert();
-
 	  delete byAddress[stores[msg.sender]];
 	  delete stores[msg.sender];
 
@@ -146,6 +144,7 @@ contract ETHMall is SafeMath, ETHMallInterface {
 	  return true;
   }
 
+  /*
   function depositReturn() registered NoReentrancy returns (bool) {
           require(stores[msg.sender] != address(0));
 	  require(isExpired(msg.sender));
@@ -163,6 +162,7 @@ contract ETHMall is SafeMath, ETHMallInterface {
 
 	  return true;
   }
+  */
 
   // owner only
   function connectReg(address reg) ownerOnly returns (bool) {
