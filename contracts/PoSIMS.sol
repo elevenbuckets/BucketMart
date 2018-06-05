@@ -21,14 +21,10 @@ contract PoSIMS is SafeMath, PoSIMSInterface {
   bool private locked;
 
   function PoSIMS(address malladdr, address regaddr, address holder, uint _deposit) payable { // Constructor
-    require(msg.value == deposit);
-
     theMall = malladdr;
     theReg = regaddr;
     owner = holder;
     deposit = _deposit;
-
-    OpenShop(owner, theMall, block.number, msg.value);
   }
 
   modifier proxyOnly() {

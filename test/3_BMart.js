@@ -18,6 +18,8 @@ const __cfpath = __topdir + '/.local/config.json';
 
 // CastIron Instance
 const ciapi = new CastIron(__cfpath);
+ciapi.password('masterpass');
+if (!ciapi.validPass) Process.exit(1);
 
 ciapi.configs.queueInterval = 160000;
 
@@ -66,12 +68,8 @@ const handleReceipts = (title, p) =>
 // TKR, the ERC20 for testing
 let TKRAddr = ciapi.TokenList['TKR'].addr;
 let TKRdecimal = ciapi.TokenList['TKR'].decimals;
-//let ERC20 = ciapi.TokenABI.at(TKRAddr);
-
 ciapi.hotGroups(['TKR']);
 
-// Main
-//
 // CastIron ABI + conditions loader
 ciapi.newApp(__APP__)('0.2', 'ETHMall', abiPath('ETHMall'), {'Sanity': condPath('ETHMall', 'Sanity')});
 ciapi.newApp(__APP__)('0.2', 'Registry', abiPath('Registry'), {'Sanity': condPath('Registry', 'Sanity')});
@@ -81,9 +79,8 @@ ciapi.newApp(__APP__)('0.2', 'Registry', abiPath('Registry'), {'Sanity': condPat
 let ETHMall = ciapi.CUE[__APP__]['ETHMall'];
 let Registry = ciapi.CUE[__APP__]['Registry'];
 
-// First test
-
-let accounts = ciapi.web3.eth.accounts.splice(2, ciapi.web3.eth.accounts.length); // use one account first 
+// Forth test
+let accounts = ciapi.web3.eth.accounts.splice(2, ciapi.web3.eth.accounts.length); // rest of the accounts
 let stage = Promise.resolve();
 
 ciapi.setAccount(ciapi.web3.eth.accounts[0]);

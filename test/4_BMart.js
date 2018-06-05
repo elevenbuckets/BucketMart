@@ -18,6 +18,8 @@ const __cfpath = __topdir + '/.local/config.json';
 
 // CastIron Instance
 const ciapi = new CastIron(__cfpath);
+ciapi.password('masterpass');
+if(!ciapi.validPass) Process.exit(1);
 
 ciapi.configs.queueInterval = 160000;
 
@@ -81,9 +83,9 @@ ciapi.newApp(__APP__)('0.2', 'Registry', abiPath('Registry'), {'Sanity': condPat
 let ETHMall = ciapi.CUE[__APP__]['ETHMall'];
 let Registry = ciapi.CUE[__APP__]['Registry'];
 
-// First test
+// Fifth test
 
-let accounts = ciapi.web3.eth.accounts.splice(2, ciapi.web3.eth.accounts.length); // use one account first 
+let accounts = ciapi.web3.eth.accounts.splice(2, ciapi.web3.eth.accounts.length); // rest of the accounts
 
 ciapi.gasPrice = 10000000000;
 
