@@ -86,6 +86,10 @@ let accounts = ciapi.web3.eth.accounts.splice(2, ciapi.web3.eth.accounts.length)
 ciapi.gasPrice = 30000000000;
 
 let jobList4 = accounts.map((addr) => {
+    if (ETHMall.getStoreInfo(addr)[0] === '0x') {
+	    console.log(`address ${addr} has no store, skipped ...`);
+	    return null;
+    }
     console.log(`Owner: ${addr}: Shop Address: ${ETHMall.getStoreInfo(addr)}`);
     ciapi.setAccount(addr);
     return ciapi.enqueueTk('Token','TKR','approve', ['spender', 'amount'])(null, 250000, {'spender': ETHMall.getStoreInfo(addr)[0], 'amount': 300000000000000});
@@ -94,10 +98,17 @@ let jobList4 = accounts.map((addr) => {
 ciapi.gasPrice = 10000000000;
 
 let jobList5 = accounts.map((addr, t) => {
+    if (ETHMall.getStoreInfo(addr)[0] === '0x') {
+	    console.log(`address ${addr} has no store, skipped ...`);
+	    return null;
+    }
     ciapi.setAccount(addr);
     ciapi.newApp(__APP__)('0.2', 'PoSIMS'+t, abiPath('PoSIMS'), {'Sanity': condPath('PoSIMS', 'Sanity')}, ETHMall.getStoreInfo(addr)[0]);
     return ciapi.enqueueTk(__APP__, 'PoSIMS'+t, 'addProductInfo', ['token', 'amount', 'price'])(null, 250000, {'token': TKRAddr, 'amount': 300000000000000, 'price': 1230000000000000});
 });
+
+jobList4 = jobList4.filter((e) => { return e !== null });
+jobList5 = jobList5.filter((e) => { return e !== null });
 
 describe('BucketMart', () => {
         describe('shop owner', () => {

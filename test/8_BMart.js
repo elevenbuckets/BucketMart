@@ -18,6 +18,8 @@ const __cfpath = __topdir + '/.local/config.json';
 
 // CastIron Instance
 const ciapi = new CastIron(__cfpath);
+ciapi.password('masterpass');
+if(!ciapi.validPass) Process.exit(1);
 
 ciapi.configs.queueInterval = 160000;
 
@@ -84,6 +86,11 @@ let stage = Promise.resolve();
     ciapi.gasPrice = 10000000000;
 
     let jobList5 = accounts.map((addr, t) => {
+	if (ETHMall.getStoreInfo(addr)[0] === '0x') {
+                console.log(`Owner: ${addr} has no store, skipped ...`);
+            	return null;
+    	}
+
 	ciapi.setAccount(addr);
 
 	let np = ciapi.toWei((Number((Math.random()*1000).toFixed(0)) + 1000), 12).toString();
@@ -91,6 +98,8 @@ let stage = Promise.resolve();
 	ciapi.newApp(__APP__)('0.2', 'PoSIMS'+t, abiPath('PoSIMS'), {'Sanity': condPath('PoSIMS', 'Sanity')}, ETHMall.getStoreInfo(addr)[0]);
 	return ciapi.enqueueTk(__APP__, 'PoSIMS'+t, 'changePrice', ['token', 'price'])(null, 250000, {'token': TKRAddr, 'price': np});
     });
+
+jobList5 = jobList5.filter((e) => { return e !== null });
 
 describe('BucketMart', () => {
 	describe('shop owner', () => {

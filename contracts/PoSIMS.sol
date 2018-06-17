@@ -13,7 +13,9 @@ contract PoSIMS is SafeMath, PoSIMSInterface {
   address public theMall;
   address public owner;
   address public theReg;
+  bool public payback; 
   address reg;
+
 
   mapping(address => uint) prices;
   mapping(uint => address) catalog;
@@ -25,6 +27,7 @@ contract PoSIMS is SafeMath, PoSIMSInterface {
     theReg = regaddr;
     owner = holder;
     deposit = _deposit;
+    payback = false;
   }
 
   modifier proxyOnly() {
@@ -116,9 +119,10 @@ contract PoSIMS is SafeMath, PoSIMSInterface {
   }
 
   function withdraw() ownerOnly NoReentrancy returns (bool) {
-          if (ETHMallInterface(theMall).isExpired(this) == true) {
+          if (ETHMallInterface(theMall).isExpired(this) == true && payback == false) {
                 require(this.balance > 0);
                 require(msg.sender.send(this.balance));
+		payback = true;
           } else {
                 require(this.balance > deposit);
                 require(msg.sender.send(this.balance - deposit));
