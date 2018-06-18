@@ -132,16 +132,27 @@ contract PoSIMS is SafeMath, PoSIMSInterface {
   }
 
   function withdraw() ownerOnly NoReentrancy returns (bool) {
+	  if (paid == true && ETHMallInterface(theMall).isExpired(this) == true) {
+                require(this.balance > 0);
+                require(msg.sender.send(this.balance));
+
+		return true;
+	  }
+
           if (ETHMallInterface(theMall).isExpired(this) == true && paid == false) {
 		paid = !paid;
                 require(this.balance > 0);
                 require(msg.sender.send(this.balance));
+
+		return true;
           } else {
                 require(this.balance > deposit);
                 require(msg.sender.send(this.balance - deposit));
-          }
+          
+		return true;
+	  }
 
-          return true;
+	  return false;
   }
 
   function closeStore() ownerOnly returns (bool) {

@@ -19,7 +19,7 @@ const __cfpath = __topdir + '/.local/config.json';
 // CastIron Instance
 const ciapi = new CastIron(__cfpath);
 ciapi.password('masterpass');
-if(!ciapi.validPass) Process.exit(1);
+if (!ciapi.validPass) Process.exit(1);
 
 ciapi.configs.queueInterval = 160000;
 
@@ -68,12 +68,8 @@ const handleReceipts = (title, p) =>
 // TKR, the ERC20 for testing
 let TKRAddr = ciapi.TokenList['TKR'].addr;
 let TKRdecimal = ciapi.TokenList['TKR'].decimals;
-//let ERC20 = ciapi.TokenABI.at(TKRAddr);
-
 ciapi.hotGroups(['TKR']);
 
-// Main
-//
 // CastIron ABI + conditions loader
 ciapi.newApp(__APP__)('0.2', 'ETHMall', abiPath('ETHMall'), {'Sanity': condPath('ETHMall', 'Sanity')});
 ciapi.newApp(__APP__)('0.2', 'Registry', abiPath('Registry'), {'Sanity': condPath('Registry', 'Sanity')});
@@ -83,19 +79,17 @@ ciapi.newApp(__APP__)('0.2', 'Registry', abiPath('Registry'), {'Sanity': condPat
 let ETHMall = ciapi.CUE[__APP__]['ETHMall'];
 let Registry = ciapi.CUE[__APP__]['Registry'];
 
-// Fifth test
-
+// Forth test
 let accounts = ciapi.web3.eth.accounts.splice(2, ciapi.web3.eth.accounts.length); // rest of the accounts
+let stage = Promise.resolve();
 
-ciapi.gasPrice = 10000000000;
-
-let jobList3 = accounts.map((addr) => {
-    ciapi.setAccount(addr);
-    return ciapi.enqueueTk('BMart','ETHMall','NewStoreFront', [])(ciapi.web3.toWei(3,'ether'), 2200000, {});
+ciapi.setAccount(ciapi.web3.eth.accounts[0]);
+let AirDrop = accounts.map((addr) => {
+        return ciapi.enqueueTx('TKR')(addr, 300000000000000, 250000); // 300 TKR
 });
 
 describe('BucketMart', () => {
-        describe('anyone', () => {
-                handleReceipts("should be able to create new store front with proper deposit", ciapi.processJobs(jobList3));
-        });
+	describe('token owner', () => {
+    		handleReceipts("performing TKR airdrop", ciapi.processJobs(AirDrop));
+	});
 });

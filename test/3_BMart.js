@@ -4,7 +4,8 @@
 const fs = require('fs');
 const path = require('path');
 const chai = require("chai");
-const expect = chai.expect;
+const bn = require('bignumber.js');
+const assert = chai.assert;
 
 console.debug = function (x) {};
 
@@ -33,8 +34,7 @@ const abiPath = ctrName => { return path.join(__abidir, ctrName + '.json'); }
 const condPath = (ctrName, condName) => { return path.join(__condir, ctrName, condName + '.json') };
 const handleReceipts = (title, p) => 
 {
-	let __getReceipts = (p) => (resolve, reject) =>
-	{
+	it(title, () => {
 		return p.then((Q) => 
 		{
 			console.log(`      QID: ${Q}`);
@@ -52,18 +52,16 @@ const handleReceipts = (title, p) =>
 
 			let stats = results.map( (o) => { return ciapi.hex2num(o.status); })
 			let rc = stats.reduce( (a,o) => { return a * o; } );
-			
-			resolve(rc);
-		})
-		.catch((e) => { reject(e); });
-	}
 
-	it(title, async () => {
-		let _p = new Promise(__getReceipts(p));
-		let _r = await _p;
-		expect(Number(_r)).to.equal(1);
+			if (rc != 1) {
+				//console.log(`Hint: ${JSON.stringify(stats, 0, 2)}`);
+				assert.fail(rc, 1, "\t" + JSON.stringify(stats));
+			}
+		});
 	});
 };
+const byte32ToAddress = (b) => { return ciapi.web3.toAddress(ciapi.web3.toHex(ciapi.web3.toBigNumber(String(b)))); };
+const byte32ToDecimal = (b) => { return ciapi.web3.toDecimals(ciapi.web3.toBigNumber(String(b))); };
 
 // TKR, the ERC20 for testing
 let TKRAddr = ciapi.TokenList['TKR'].addr;
@@ -79,18 +77,27 @@ ciapi.newApp(__APP__)('0.2', 'Registry', abiPath('Registry'), {'Sanity': condPat
 let ETHMall = ciapi.CUE[__APP__]['ETHMall'];
 let Registry = ciapi.CUE[__APP__]['Registry'];
 
-// Forth test
-let accounts = ciapi.web3.eth.accounts.splice(2, ciapi.web3.eth.accounts.length); // rest of the accounts
-let stage = Promise.resolve();
+// Seventh test
 
-ciapi.setAccount(ciapi.web3.eth.accounts[0]);
-let AirDrop = accounts.map((addr) => {
-	console.log("DEBUG: addr = " + addr);
-        return ciapi.enqueueTx('TKR')(addr, 300000000000000, 250000); // 300 TKR
-});
+let account = ciapi.allAccounts()[1];
+let posAddr = ETHMall.getStoreInfo(account)[0];
+
+ciapi.newApp(__APP__)('0.2', 'PoSIMS', abiPath('PoSIMS'), {'Sanity': condPath('PoSIMS', 'Sanity')}, posAddr);
+
+let posims  = ciapi.CUE[__APP__]['PoSIMS'];
+console.log(posims.paid())
+
+ciapi.setAccount(account);
+let jobList7 = [ ciapi.enqueueTk('BMart','PoSIMS','withdraw', [])(null, 2200000, {}) ]; 
+
+ciapi.gasPrice = 10000000000;
 
 describe('BucketMart', () => {
-	describe('token owner', () => {
-    		handleReceipts("performing TKR airdrop", ciapi.processJobs(AirDrop));
+	describe('shop owner', () => {
+		it('should be able to see that secure deposit can be withdraw', () => { assert(ETHMall.isExpired(posAddr), 'not yet expired'); });
+		it('should be able to see that secure deposit has not been refunded', () => { assert(posims.paid() == false, 'has been refunded'); });
+	});
+	describe('shop owner', () => {
+    		handleReceipts("withdraw from his shop", ciapi.processJobs(jobList7))
 	});
 });
