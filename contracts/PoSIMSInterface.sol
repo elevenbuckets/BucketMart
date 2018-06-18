@@ -6,8 +6,9 @@ contract PoSIMSInterface {
   	address public theMall;
   	address public owner;
   	address public thisReg;
-	bool public payback;
+	bool public paid;
 
+	function getCatalog() constant returns (bytes32[2][] results);
 	function getPrice(address token) constant returns (uint);
 	function addProductInfo(address token, uint amount, uint price) returns (bool);
 	function delistProduct(uint id) returns (bool);

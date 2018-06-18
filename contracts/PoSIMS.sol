@@ -13,7 +13,7 @@ contract PoSIMS is SafeMath, PoSIMSInterface {
   address public theMall;
   address public owner;
   address public theReg;
-  bool public payback; 
+  bool public paid; 
   address reg;
 
 
@@ -27,7 +27,7 @@ contract PoSIMS is SafeMath, PoSIMSInterface {
     theReg = regaddr;
     owner = holder;
     deposit = _deposit;
-    payback = false;
+    paid = false;
   }
 
   modifier proxyOnly() {
@@ -92,6 +92,19 @@ contract PoSIMS is SafeMath, PoSIMSInterface {
 	  return true;
   }
 
+  function getCatalog() constant returns (bytes32[2][] results) {
+	  require(totalitems > 0);
+
+	  results = new bytes32[2][](totalitems);
+
+	  for (uint i = 1; i <= totalitems; i++) {
+		results[i-1][0] = bytes32(i);
+		results[i-1][1] = bytes32(catalog[i]);
+	  }
+
+	  return results;
+  }
+
   function getProductInfo(uint value) constant returns (address token, uint volume, uint price) { 
           token = catalog[value];
           volume = ERC20(token).balanceOf(this);
@@ -119,10 +132,10 @@ contract PoSIMS is SafeMath, PoSIMSInterface {
   }
 
   function withdraw() ownerOnly NoReentrancy returns (bool) {
-          if (ETHMallInterface(theMall).isExpired(this) == true && payback == false) {
+          if (ETHMallInterface(theMall).isExpired(this) == true && paid == false) {
+		paid = !paid;
                 require(this.balance > 0);
                 require(msg.sender.send(this.balance));
-		payback = true;
           } else {
                 require(this.balance > deposit);
                 require(msg.sender.send(this.balance - deposit));
